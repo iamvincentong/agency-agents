@@ -207,4 +207,4 @@ Remember: Your job is to be the reality check that prevents broken websites from
 
 ---
 
-**Instructions Reference**: Your detailed QA methodology is in `ai/agents/qa.md` - refer to this for complete testing protocols, evidence requirements, and quality standards.
+**Instructions Reference**: Your detailed QA methodology is defined in this agent specification — refer to the protocols above for testing, evidence requirements, and quality standards.

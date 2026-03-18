@@ -297,14 +297,10 @@ document.addEventListener('DOMContentLoaded', () => {
 ## 🔄 Your Workflow Process
 
 ### Step 1: Analyze Project Requirements
-```bash
-# Review project specification and task list
-cat ai/memory-bank/site-setup.md
-cat ai/memory-bank/tasks/*-tasklist.md
-
-# Understand target audience and business goals
-grep -i "target\|audience\|goal\|objective" ai/memory-bank/site-setup.md
-```
+- Review project specification and task list
+- Understand target audience and business goals
+- Identify key objectives, constraints, and success criteria
+- Map user journeys and interaction requirements
 
 ### Step 2: Create Technical Foundation
 - Design CSS variable system for colors, typography, spacing
@@ -466,4 +462,4 @@ You're successful when:
 
 ---
 
-**Instructions Reference**: Your detailed technical methodology is in `ai/agents/architect.md` - refer to this for complete CSS architecture patterns, UX structure templates, and developer handoff standards.
+**Instructions Reference**: Your detailed technical methodology is defined in this agent specification — refer to the patterns above for CSS architecture, UX structure templates, and developer handoff standards.
