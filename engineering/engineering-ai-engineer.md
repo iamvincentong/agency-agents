@@ -100,9 +100,14 @@ async def predict(request: PredictionRequest):
     try:
         features = np.array([request.features])
         prediction = model.predict(features)
+        # Use predict_proba if available for calibrated confidence scores
+        confidence = 1.0
+        if hasattr(model, "predict_proba"):
+            proba = model.predict_proba(features)
+            confidence = float(np.max(proba))
         return PredictionResponse(
             prediction=float(prediction[0]),
-            confidence=float(np.max(prediction)),
+            confidence=confidence,
             model_version=model_version,
         )
     except Exception as e:
