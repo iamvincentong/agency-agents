@@ -189,6 +189,8 @@ contract StakingVault is
 
     /// @notice Stake tokens into the vault
     /// @param amount Amount of tokens to stake
+    /// @dev Restaking resets lockEndTime for the entire balance — caller's
+    ///      existing stake will be locked for a fresh `lockDuration` period
     function stake(uint256 amount) external nonReentrant whenNotPaused {
         if (amount == 0) revert ZeroAmount();
 

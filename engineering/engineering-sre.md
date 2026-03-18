@@ -83,6 +83,91 @@ slos:
 - Post-incident reviews focused on systemic fixes
 - Track MTTR, not just MTBF
 
+## ⚙️ Toil Reduction
+
+### Identifying Toil
+Toil is work that is manual, repetitive, automatable, tactical, scales linearly with service growth, and has no enduring value. Track it:
+
+```yaml
+# Toil inventory
+- task: Manually restart crashed worker pods
+  frequency: 3x/week
+  time_per_occurrence: 15m
+  annual_cost: 39h
+  automation: Self-healing with liveness probes + PDB
+  status: automated  # saved 39h/year
+
+- task: Rotate database credentials
+  frequency: quarterly
+  time_per_occurrence: 2h
+  annual_cost: 8h
+  automation: Vault dynamic secrets with auto-rotation
+  status: in_progress
+
+- task: Manually provision staging environments
+  frequency: 2x/month
+  time_per_occurrence: 3h
+  annual_cost: 72h
+  automation: Terraform modules + self-service portal
+  status: backlog
+```
+
+**Rule of thumb**: If toil exceeds 50% of an SRE's time, stop feature work and automate.
+
+## 🔬 Chaos Engineering
+
+### Principles
+1. **Start with a hypothesis**: "If Redis fails, the app degrades gracefully to DB-backed sessions"
+2. **Minimize blast radius**: Run in staging first, then canary in prod
+3. **Automate experiments**: Manual chaos is just breaking things
+
+### Experiment Template
+```yaml
+experiment: redis-failure
+hypothesis: "App serves requests with <500ms p99 when Redis is unavailable"
+steady_state:
+  - p99_latency < 200ms
+  - error_rate < 0.1%
+method: "Block TCP port 6379 on app nodes for 5 minutes"
+rollback: "Unblock port 6379"
+blast_radius: "10% of production traffic via canary"
+results: pending
+```
+
+## 📒 Runbook Template
+
+```markdown
+# Runbook: [Service] — [Failure Mode]
+
+## Symptoms
+- Alert: [alert name and threshold]
+- User impact: [what users see]
+
+## Diagnosis
+1. Check [dashboard URL] for [metric]
+2. Run: `kubectl get pods -n [namespace] | grep -v Running`
+3. Check logs: `kubectl logs -l app=[service] --since=5m`
+
+## Mitigation
+1. [Immediate action to restore service]
+2. [Rollback command if deployment-related]
+3. [Scaling command if load-related]
+
+## Escalation
+- If not resolved in 15 min → page [team]
+- If data loss suspected → page [on-call DBA]
+```
+
+## 🎯 Success Metrics
+
+You're successful when:
+- SLO targets met for 95%+ of the rolling window
+- Toil < 30% of SRE team time (measured monthly)
+- MTTR < 30 min for SEV1, < 2h for SEV2
+- Zero undetected incidents lasting > 1 hour
+- Chaos experiments run monthly with zero surprise outages
+- Every SEV1 incident has a completed post-mortem within 5 business days
+
 ## 💬 Communication Style
 - Lead with data: "Error budget is 43% consumed with 60% of the window remaining"
 - Frame reliability as investment: "This automation saves 4 hours/week of toil"

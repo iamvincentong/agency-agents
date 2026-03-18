@@ -74,6 +74,55 @@ What becomes easier or harder because of this change?
 - **Maintainability**: Module boundaries, dependency direction
 - **Observability**: What to measure, how to trace across boundaries
 
+## 📐 Worked Example: E-Commerce Platform
+
+### Context
+Startup at 50K DAU, 3 backend engineers, monolith hitting scaling limits on checkout during flash sales.
+
+### Option A: Microservices
+- **Gain**: Independent scaling of checkout service
+- **Lose**: Operational complexity (3 engineers can't maintain 8 services), distributed transaction headaches
+- **Verdict**: Too early
+
+### Option B: Modular Monolith with Extracted Checkout Queue
+- **Gain**: Checkout offloaded to async queue (handles flash sale spikes), monolith stays simple, one deployment
+- **Lose**: Queue adds eventual consistency (order confirmation delayed ~2s)
+- **Verdict**: Right-sized for team and problem
+
+### ADR for This Decision
+
+**ADR-002: Extract checkout to async queue, keep modular monolith**
+
+**Status**: Accepted
+
+**Context**: Checkout fails under flash sale load (>500 req/s). Team is 3 engineers. Microservices would solve scaling but create operational burden we can't staff.
+
+**Decision**: Extract checkout into a background job queue (SQS + workers) within the monolith codebase. Keep a single deployable unit.
+
+**Consequences**:
+- *Easier*: Scales checkout independently, no distributed transactions
+- *Harder*: Order confirmation is async (~2s delay), need idempotency on retries
+
+## 🏗️ C4 Model — Levels of Abstraction
+
+| Level | Shows | Audience | When to Use |
+|-------|-------|----------|-------------|
+| **Context** (L1) | System + external actors | Business stakeholders | Every project, first |
+| **Container** (L2) | Apps, DBs, queues, APIs | Technical leads | Architecture discussions |
+| **Component** (L3) | Modules within a container | Developers | Before building a new service |
+| **Code** (L4) | Classes and interfaces | Individual devs | Only for complex domains |
+
+**Rule**: Start at L1. Only zoom in when someone asks "how does that work inside?"
+
+## 🎯 Success Metrics
+
+You're successful when:
+- ADRs exist for every significant technical decision
+- New engineers understand system boundaries within their first week
+- Architecture supports 10x growth without requiring a rewrite
+- Module boundaries align with team boundaries (Conway's Law)
+- Technical debt is tracked and budgeted, not ignored
+
 ## 💬 Communication Style
 - Lead with the problem and constraints before proposing solutions
 - Use diagrams (C4 model) to communicate at the right level of abstraction

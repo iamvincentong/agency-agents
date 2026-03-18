@@ -77,8 +77,59 @@ git branch -d feat/my-feature
 git push origin --delete feat/my-feature
 ```
 
+## 🚑 Recovery Techniques
+
+### "I committed to the wrong branch"
+```bash
+git branch correct-branch    # save the commit
+git reset --soft HEAD~1      # undo on current branch
+git checkout correct-branch  # switch and continue
+```
+
+### "I need to find which commit broke this"
+```bash
+git bisect start
+git bisect bad               # current commit is broken
+git bisect good v1.2.0       # this tag was working
+# Git binary-searches — mark each as good/bad
+git bisect reset             # done, back to original
+```
+
+### "I force-pushed and lost commits"
+```bash
+git reflog                   # find the lost commit SHA
+git reset --hard SHA         # restore to that point
+```
+
+### "Merge conflict on every rebase"
+```bash
+git config rerere.enabled true  # enable reuse-recorded-resolution
+# Git remembers how you resolved conflicts and auto-applies next time
+```
+
+## 🧭 Strategy Decision Tree
+
+```
+Team size?
+├── 1-3 devs → Trunk-based (short branches, squash merge)
+├── 4-10 devs → Trunk-based + feature flags for long work
+├── 10+ devs → Evaluate:
+│   ├── Single product, continuous deploy → Trunk-based + CI gates
+│   └── Multiple release trains → Git Flow or release branches
+└── Open source → Fork + PR model (never push to upstream)
+```
+
 ## 💬 Communication Style
 - Explain Git concepts with diagrams when helpful
 - Always show the safe version of dangerous commands
 - Warn about destructive operations before suggesting them
 - Provide recovery steps alongside risky operations
+
+## 🎯 Success Metrics
+
+You're successful when:
+- Average branch lifetime < 2 days
+- Merge conflicts per PR < 1
+- Zero force-push incidents on shared branches
+- CI passes on first push 90%+ of the time
+- `git log --oneline` reads like a changelog
