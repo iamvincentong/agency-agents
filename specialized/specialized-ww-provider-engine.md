@@ -60,7 +60,7 @@ SKIP all other mode sections — they are not relevant to your task.
 
 Before doing ANY work, read these files to load your operating context:
 
-1. **Skill file** (architecture, workflows, pitfalls): `/Users/vincent/.claude/skills/ww-provider-engine/SKILL.md`
+1. **Skill file** (architecture, workflows, 31 pitfalls): `/Users/vincent/.claude/skills/ww-provider-engine/SKILL.md`
 2. **Provider note** (if working on a specific provider): `/Users/vincent/.claude/skills/ww-provider-engine/providers/{gp_code}.md`
 3. **Provider config** (if it exists): find in `docs/provider-configs/{gp_code}.provider-config.json` relative to the repo root
 
@@ -107,6 +107,8 @@ These are your primary references. The skill file contains 28 pitfalls, architec
 4. **`clear_body: true`** required on first `inject_body_field` when replacing JSON body with form fields.
 
 5. **Response `divide` modifier** is on ResponseMapper (response side), NOT RequestBuilder. Don't confuse with request-side `multiply`.
+
+6. **`error_code_field` must point to the ERROR CODE, not the success flag (D103).** Providers often have both a success flag (`rtStatus`, `code`, `status` — 0/1 or true/false) AND a separate error code field (`errorCode`, `errCode`, `error_code`). The success flag goes in `success_indicator.field`. The error code goes in `error_code_field`. Confusing them causes `error_code=0` in every api_log failure row, hiding real codes. Similarly, `error_message_field` must match the actual response field name (`errorMsg` not `rtMessage`). **Always cross-reference the API response table for exact field names.** This bug affected 5/6 Mega operations and was invisible without raw response inspection.
 
 ## Mode: Audit
 
@@ -187,7 +189,7 @@ Use `ragflow_retrieval` MCP tool with `page_size: 30`, `similarity_threshold: 0.
 When asked to integrate a new provider:
 
 1. **Read API docs** (RAGFlow or provided file) — identify auth, transport, operations, response format, error codes
-2. **Read skill file** for architecture reference and the 22 pitfalls
+2. **Read skill file** for architecture reference and the 31 pitfalls
 3. **Check provider note template**: `/Users/vincent/.claude/skills/ww-provider-engine/providers/_template.md`
 4. **Generate config JSON** at `docs/provider-configs/{gp_code}.provider-config.json`
 5. **Create provider note** at `/Users/vincent/.claude/skills/ww-provider-engine/providers/{gp_code}.md`
@@ -291,6 +293,14 @@ If the error code is NOT in the provider note, query RAGFlow for its meaning.
 - IP whitelist (`curl https://api.ipify.org` from container)
 - Amount scaling (x10000, negate)
 
+### Step 8: Diagnostic — "error_message is null but status=false"
+
+If `game_log_sync_jobs.error_message` shows `"soft-fail: controller returned status=false without error_message"`:
+1. Query `provider_api_logs` for the failed call — inspect `response_summary` raw JSON
+2. If `error_code` in the log is `0` or doesn't match the response body's actual error code → `error_code_field` points to the wrong field (likely the success flag instead of the error code). See Critical Rule #6.
+3. If `error_message` is null but the response body HAS an error message field → `error_message_field` points to a field name that doesn't exist. Check the exact field name in the API response table.
+4. Fix both fields in the config, re-import with `--force`, bust cache with `ProviderIntegration::bustCache($gpCode)`.
+
 ### Mandatory Epilogue: Update Provider Note
 
 If you discovered a new error code, gotcha, or resolution, update `/Users/vincent/.claude/skills/ww-provider-engine/providers/{gp_code}.md` with the finding. Knowledge must not die with the conversation.
@@ -368,7 +378,7 @@ Test commands:
 |---|---|---|---|
 | gamingsoft | md5_query_sign | 7 | CSV game logs, SPE DataFeeds |
 | fachai | pipeline (AES+MD5) | 7 | format:numeric, negate |
-| mega | pipeline (AES+MD5) | 6 | amounts x10000, amount_divisor |
+| mega | pipeline (AES+MD5) | 6 | amounts x10000, amount_divisor, end_offset_minutes:1, success_indicator in[0,996] (D101-103) |
 | monkeyking | pipeline | 8 | Pull-queue, negate |
 | nextspin | pipeline (MD5 Digest header) | 9 | Lobby redirect, callback auth, kick_player |
 | spribe | pipeline (HMAC-SHA256) | 8 | format:string, format:uuid, get_vendors |
